@@ -6,10 +6,9 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.SparkRelativeEncoder;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -18,13 +17,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class AngleSys extends SubsystemBase {
     private TalonFX leftMotor = new TalonFX(41, "canivore");
     private TalonFX rightMotor = new TalonFX(42, "canivore");
-    private CANSparkMax sparkMaxEncoderOnly = new CANSparkMax(43, MotorType.kBrushed);
+    private SparkMax sparkMaxEncoderOnly = new SparkMax(43, MotorType.kBrushed);
     private DigitalInput downLimit = new DigitalInput(9);
     private DigitalInput upLimit = new DigitalInput(8);
     private RelativeEncoder encoder;
 
     public AngleSys() {
-        encoder = sparkMaxEncoderOnly.getEncoder(SparkRelativeEncoder.Type.kQuadrature, 4096);
+        encoder = sparkMaxEncoderOnly.getEncoder();
 
         TalonFXConfigurator leftConfig = leftMotor.getConfigurator();
         TalonFXConfigurator rightConfig = rightMotor.getConfigurator();

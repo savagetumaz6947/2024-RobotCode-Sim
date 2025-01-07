@@ -1,7 +1,7 @@
 package frc.robot.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -11,8 +11,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivetrain.Swerve;
 
 public class Shooter extends SubsystemBase {
-    private CANSparkMax up = new CANSparkMax(62, MotorType.kBrushless);
-    private CANSparkMax down = new CANSparkMax(61, MotorType.kBrushless);
+    private SparkMax up = new SparkMax(62, MotorType.kBrushless);
+    private SparkMax down = new SparkMax(61, MotorType.kBrushless);
 
     private Swerve swerve;
 

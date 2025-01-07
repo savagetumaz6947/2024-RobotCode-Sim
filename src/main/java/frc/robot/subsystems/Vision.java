@@ -6,6 +6,7 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -17,7 +18,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 public class Vision {
     private PhotonCamera camera;
     private PhotonPoseEstimator photonEstimator;
-    private double lastEstTimestamp = 0;
 
     /**
      * Constructs a Vision object with no transformation (primarily for use with Object Detection)
@@ -44,7 +44,7 @@ public class Vision {
      */
     public Vision(String cameraName, Transform3d robotToCam, AprilTagFieldLayout aprilTagFieldLayout) {
         camera = new PhotonCamera(cameraName);
-        photonEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, camera, robotToCam);
+        photonEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCam);
         // photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_LAST_POSE);
     }
 
@@ -70,12 +70,13 @@ public class Vision {
      *
      * @return An {@link EstimatedRobotPose} with an estimated pose, estimate timestamp, and targets
      *     used for estimation.
+     * 
      */
-    public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
-        Optional<EstimatedRobotPose> visionEst = photonEstimator.update();
-        double latestTimestamp = camera.getLatestResult().getTimestampSeconds();
-        boolean newResult = Math.abs(latestTimestamp - lastEstTimestamp) > 1e-5;
-        if (newResult) lastEstTimestamp = latestTimestamp;
+    public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
+        Optional<EstimatedRobotPose> visionEst = null;
+        for (PhotonPipelineResult estimator : camera.getAllUnreadResults()) {
+            visionEst = photonEstimator.update(estimator);
+        }
         return visionEst;
     }
 }

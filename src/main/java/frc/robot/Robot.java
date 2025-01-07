@@ -4,14 +4,7 @@
 
 package frc.robot;
 
-import org.littletonrobotics.junction.LoggedRobot;
-// import org.littletonrobotics.junction.Logger;
-// import org.littletonrobotics.junction.networktables.NT4Publisher;
-// import org.littletonrobotics.junction.wpilog.WPILOGReader;
-// import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-
-// import edu.wpi.first.wpilibj.PowerDistribution;
-// import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -21,9 +14,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class Robot extends LoggedRobot {
-  public static final CTREConfigs ctreConfigs = new CTREConfigs();
-
+public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
@@ -39,20 +30,6 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotInit() {
-    // Logger.recordMetadata("Project Name", "Parasaur");
-    // Logger.recordMetadata("Game", "2024 CRESCENDO");
-    // Logger.recordMetadata("Regionals", "Sacramento & Central Valley");
-    // Logger.recordMetadata("Captain/Lead Programmer/Operator", "Aaron Lee, Class of 2025");
-    // Logger.recordMetadata("Mentor", "Hank Wei (Meat Bun))");
-    // Logger.recordMetadata("Head Designer", "Jessica Lin (JL), Class of 2025");
-    // Logger.recordMetadata("Head Mechanic", "Cory Tseng, Class of 2025");
-    // Logger.recordMetadata("Head PR/Business", "Cheryl Huang, Class of 2025");
-    // Logger.recordMetadata("Strategy Manager", "Walter Hsieh, Class of 2025");
-    // Logger.recordMetadata("Mechanic", "Mars Chung, Class of 2026");
-    // Logger.recordMetadata("Mechanic", "Aaron Chen (Yi-Chia), Class of 2026");
-    // Logger.recordMetadata("Driver", "Austin Wu, Class of 2025");
-    // Logger.recordMetadata("Driver 2", "Evan Chen, Class of 2026");
-    // Logger.recordMetadata("Factory Manager", "Alexander Lin, Class of 2025");
     System.out.println( "                     ,% &&&%.&&&                  \r\n" + //
                         "                     &&&&&&&&&&   .&&             \r\n" + //
                         "                   &&&&&&&&&& %%   %%             \r\n" + //
@@ -68,26 +45,6 @@ public class Robot extends LoggedRobot {
                         "                  %  &    #&   %&                 \r\n" + //
                         "");
     System.out.println("  ######                                                                \n  #    #                                                                \n  #    #  #######  #######  #######  #######  #######  #     #  ####### \n#######  #     #  #     #  #     #  #        #     #  #     #  #     # \n##       #######  #######  #######  #######  #######  #     #  ####### \n##       #     #  #    #   #     #        #  #     #  #     #  #    #  \n##       #     #  #    ##  #     #  #######  #     #  #######  #    ## \n");
-
-    // AdvantageKit / AdvantageScope
-    // if (isReal()) {
-    //   try {
-    //     Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick (FAT32 formatted, "/U/logs")
-    //   } catch (Exception e) {
-    //     System.out.println("Exception " + e + " when opening WPILOGWriter. Did you insert a FAT32 formatted USB Stick?");
-    //   }
-    //   Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-    //   pdh = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
-    // } else {
-    //   setUseTiming(false); // Run as fast as possible
-    //   String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-    //   Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-    //   Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
-    // }
-    
-    // Logger.disableDeterministicTimestamps() // See "Deterministic Timestamps" in the "Understanding Data Flow" page
-
-    // Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
 
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.

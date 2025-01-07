@@ -2,6 +2,8 @@ package frc.robot;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -11,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,19 +21,20 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.drivetrain.Swerve;
 import frc.lib.util.DeadzoneJoystick;
-import frc.robot.commands.TeleopSwerve;
 import frc.robot.commands.Angle.AutoRiseToAngle;
 import frc.robot.commands.Angle.RiseToAngle;
 import frc.robot.commands.Intake.AutoAimNote;
 import frc.robot.commands.Shooting.AutoAimToShoot;
+import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.AngleSys;
 import frc.robot.subsystems.BottomIntake;
 import frc.robot.subsystems.Climber;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakeAngle;
 import frc.robot.subsystems.LedStrip;
 import frc.robot.subsystems.MidIntake;
@@ -112,7 +116,7 @@ public class RobotContainer {
     private int maxSpeedMode = 1;
 
     /* Subsystems */
-    private final Swerve swerve = new Swerve();
+    private final CommandSwerveDrivetrain swerve = TunerConstants.createDrivetrain();
     private final MidIntake midIntake = new MidIntake();
     private final BottomIntake bottomIntake = new BottomIntake();
     private final Shooter shooter = new Shooter(swerve);
@@ -151,9 +155,9 @@ public class RobotContainer {
                     midIntake.rawMove(0);
                 })
                 /* PICK UP NOTE COMMAND END */,
-                swerve.run(() -> swerve.driveChassis(new ChassisSpeeds(1.5, 0, 0)))
+                swerve.run(() -> swerve.applyRequest(new ChassisSpeeds(1.5, 0, 0)))
             ),
-            swerve.runOnce(() -> swerve.driveChassis(new ChassisSpeeds(0, 0, 0)))
+            swerve.runOnce(() -> swerve.applyRequest(new ChassisSpeeds(0, 0, 0)))
         );
     private final Command autoAmpCommand =  new ParallelDeadlineGroup(
             new SequentialCommandGroup(
@@ -176,7 +180,7 @@ public class RobotContainer {
                 new WaitUntilCommand(() -> autoAimToShootCommand.isFinished()).withTimeout(2),
                 midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
             ),
-            autoAimToShootCommand.andThen(swerve.run(() -> swerve.driveChassis(new ChassisSpeeds(0,0,0)))),
+            autoAimToShootCommand.andThen(swerve.run(() -> swerve.applyRequest(new ChassisSpeeds(0,0,0)))),
             autoRiseToAngleCommand,
             shooter.shootRepeatedly(),
             new InstantCommand(() -> ledStrip.shoot(true))
@@ -188,19 +192,30 @@ public class RobotContainer {
 
     private final SendableChooser<Command> autoChooser;
 
+    /* Setting up bindings for necessary control of the swerve drive platform */
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            .withDeadband(Constants.Swerve.maxSpeed * 0.1).withRotationalDeadband(Constants.Swerve.maxAngularRate * 0.1) // Add a 10% deadband
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+
+    private final Telemetry logger = new Telemetry(Constants.Swerve.maxSpeed);
+
+    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    private final SwerveRequest.Idle swerveIdle = new SwerveRequest.Idle();
+
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         // Set default commands
         swerve.setDefaultCommand(
-            new TeleopSwerve(
-                swerve,
-                translationAxis,
-                strafeAxis,
-                rotationAxis,
-                () -> !fodButton.getAsBoolean(),
-                () -> maxSpeedMode
+            drivetrain.applyRequest(() ->
+                drive.withVelocityX(-driver.getRawAxis(Axis.kLeftY.value) * Constants.Swerve.maxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityY(-driver.getRawAxis(Axis.kLeftX.value) * Constants.Swerve.maxSpeed) // Drive left with negative X (left)
+                    .withRotationalRate(-driver.getRawAxis(Axis.kRightX.value) * Constants.Swerve.maxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
+        fodButton.onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+
         shooter.setDefaultCommand(shooter.idle());
         angleSys.setDefaultCommand(resetAngle.repeatedly());
         climber.setDefaultCommand(climber.run(() -> climber.move(leftClimbAxis, rightClimbAxis, forceBtn)));
@@ -227,7 +242,7 @@ public class RobotContainer {
     private void configureButtonBindings() {
         /* Driver Buttons */
         driverCancelSwerveBtn.onTrue(new InstantCommand(() -> {
-            swerve.driveChassis(new ChassisSpeeds());
+            swerve.applyRequest(() -> swerveIdle).execute();
             midIntake.rawMove(0);
             bottomIntake.rawMove(0);
             shooter.stop();
@@ -274,7 +289,7 @@ public class RobotContainer {
         manualMidIntakeDownBtn.whileTrue(midIntake.run(() -> midIntake.rawMove(1)).repeatedly().finallyDo(() -> midIntake.rawMove(0)));
         resetAngleBtn.onTrue(new InstantCommand(() -> angleSys.reset()));
         compositeKillBtn.whileTrue(new InstantCommand(() -> {
-            swerve.driveChassis(new ChassisSpeeds());
+            swerve.applyRequest(new ChassisSpeeds());
             midIntake.rawMove(0);
             bottomIntake.rawMove(0);
             shooter.stop();
