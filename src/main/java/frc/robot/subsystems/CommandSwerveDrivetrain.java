@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -17,6 +20,7 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -87,6 +91,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             (activePath) -> {
                 field.getObject("path").setPoses(activePath);
             });
+        // TODO: Default pose is in front of the red speaker.
+        // super.resetPose(new Pose2d(new Translation2d(Meters.of(), Meters.of()), new Rotation2d(Degrees.of(2))));
         if (Utils.isSimulation()) {
             startSimThread();
         }
