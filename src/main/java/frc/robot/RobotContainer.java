@@ -1,6 +1,10 @@
 package frc.robot;
 
+import java.io.IOException;
 import java.util.function.DoubleSupplier;
+import java.util.logging.Logger;
+
+import org.json.simple.parser.ParseException;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -49,11 +53,6 @@ public class RobotContainer {
     /* Controllers */
     private final DeadzoneJoystick driver = new DeadzoneJoystick(0);
     private final DeadzoneJoystick operator = new DeadzoneJoystick(1);
-
-    /* Drive Controls */
-    private final DoubleSupplier translationAxis = () -> -driver.getRawAxis(XboxController.Axis.kLeftY.value);
-    private final DoubleSupplier strafeAxis = () -> -driver.getRawAxis(XboxController.Axis.kLeftX.value);
-    private final DoubleSupplier rotationAxis = () -> -driver.getRawAxis(XboxController.Axis.kRightX.value);
 
     /* Driver Buttons */
     private final Trigger autoPickupButton = new Trigger(() -> driver.getRawAxis(XboxController.Axis.kRightTrigger.value) > 0.8);
@@ -196,25 +195,22 @@ public class RobotContainer {
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(Constants.Swerve.maxSpeed * 0.1).withRotationalDeadband(Constants.Swerve.maxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(Constants.Swerve.maxSpeed);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final SwerveRequest.Idle swerveIdle = new SwerveRequest.Idle();
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         // Set default commands
         swerve.setDefaultCommand(
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-driver.getRawAxis(Axis.kLeftY.value) * Constants.Swerve.maxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-driver.getRawAxis(Axis.kLeftX.value) * Constants.Swerve.maxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-driver.getRawAxis(Axis.kRightX.value) * Constants.Swerve.maxAngularRate) // Drive counterclockwise with negative X (left)
+            swerve.applyRequest(() ->
+                drive.withVelocityX(-driver.getRawAxis(XboxController.Axis.kLeftY.value) * Constants.Swerve.maxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityY(-driver.getRawAxis(XboxController.Axis.kLeftX.value) * Constants.Swerve.maxSpeed) // Drive left with negative X (left)
+                    .withRotationalRate(-driver.getRawAxis(XboxController.Axis.kRightX.value) * Constants.Swerve.maxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
-        fodButton.onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        fodButton.onTrue(swerve.runOnce(() -> swerve.seedFieldCentric()));
 
         shooter.setDefaultCommand(shooter.idle());
         angleSys.setDefaultCommand(resetAngle.repeatedly());
@@ -251,10 +247,16 @@ public class RobotContainer {
         }, swerve, midIntake, bottomIntake, shooter, angleSys, climber));
         autoPickupButton.whileTrue(pickUpNoteCommand);
         autoShootButton.onTrue(autoShootCommand);
-        autoDriveToAmpPosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToAmpShootSpot"), Constants.defaultPathConstraints));
-        autoDriveToMidPosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToMidShootSpot"), Constants.defaultPathConstraints));
-        autoDriveToStagePosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToStageShootSpot"), Constants.defaultPathConstraints));
-        autoDriveToSourceBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToSource"), Constants.defaultPathConstraints));
+        try {
+            autoDriveToAmpPosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToAmpShootSpot"), Constants.defaultPathConstraints));
+            autoDriveToMidPosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToMidShootSpot"), Constants.defaultPathConstraints));
+            autoDriveToStagePosBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToStageShootSpot"), Constants.defaultPathConstraints));
+            autoDriveToSourceBtn.onTrue(AutoBuilder.pathfindThenFollowPath(PathPlannerPath.fromPathFile("ToSource"), Constants.defaultPathConstraints));
+        } catch (IOException exception) {
+            System.out.println("[ERROR] IOException. Does this file exist? " + exception.toString());
+        } catch (ParseException exception) {
+            System.out.println("[ERROR] ParseException. Did you use PathPlanner? " + exception.toString());
+        }
         maxSpeedUp.onTrue(new InstantCommand(() ->
             maxSpeedMode = maxSpeedMode + 1 < Constants.Swerve.speedSelection.length ? maxSpeedMode + 1 : maxSpeedMode
         ));
@@ -297,38 +299,46 @@ public class RobotContainer {
             climber.move(() -> 0, () -> 0, () -> true);
         }, swerve, midIntake, bottomIntake, shooter, angleSys, climber));
         manualPickupBtn.onTrue(autoIntakeCommand);
-        trap1Btn.onTrue(new ParallelDeadlineGroup(
-            new SequentialCommandGroup(
-                AutoBuilder.pathfindThenFollowPath(
-                    PathPlannerPath.fromPathFile("ToTrap1"), Constants.defaultPathConstraints),
-                new WaitUntilCommand(() -> riseToTrap1Angle.isFinished()).withTimeout(2),
-                midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
-            ),
-            riseToTrap1Angle,
-            shooter.shootRepeatedly()
-        ).finallyDo(() -> midIntake.rawMove(0)));
-        trap2Btn.onTrue(new ParallelDeadlineGroup(
-            new SequentialCommandGroup(
-                AutoBuilder.pathfindThenFollowPath(
-                    PathPlannerPath.fromPathFile("ToTrap2"), Constants.defaultPathConstraints),
-                new WaitUntilCommand(() -> riseToTrap2Angle.isFinished()).withTimeout(2),
-                midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
-            ),
-            riseToTrap2Angle,
-            shooter.shootRepeatedly()
-        ).finallyDo(() -> midIntake.rawMove(0)));
-        trap3Btn.onTrue(new ParallelDeadlineGroup(
-            new SequentialCommandGroup(
-                AutoBuilder.pathfindThenFollowPath(
-                    PathPlannerPath.fromPathFile("ToTrap3"), Constants.defaultPathConstraints),
-                new WaitUntilCommand(() -> riseToTrap3Angle.isFinished()).withTimeout(2),
-                midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
-            ),
-            riseToTrap3Angle,
-            shooter.shootRepeatedly()
-        ).finallyDo(() -> midIntake.rawMove(0)));
+        try {
+            trap1Btn.onTrue(new ParallelDeadlineGroup(
+                new SequentialCommandGroup(
+                    AutoBuilder.pathfindThenFollowPath(
+                        PathPlannerPath.fromPathFile("ToTrap1"), Constants.defaultPathConstraints),
+                    new WaitUntilCommand(() -> riseToTrap1Angle.isFinished()).withTimeout(2),
+                    midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
+                ),
+                riseToTrap1Angle,
+                shooter.shootRepeatedly()
+            ).finallyDo(() -> midIntake.rawMove(0)));
+            trap2Btn.onTrue(new ParallelDeadlineGroup(
+                new SequentialCommandGroup(
+                    AutoBuilder.pathfindThenFollowPath(
+                        PathPlannerPath.fromPathFile("ToTrap2"), Constants.defaultPathConstraints),
+                    new WaitUntilCommand(() -> riseToTrap2Angle.isFinished()).withTimeout(2),
+                    midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
+                ),
+                riseToTrap2Angle,
+                shooter.shootRepeatedly()
+            ).finallyDo(() -> midIntake.rawMove(0)));
+            trap3Btn.onTrue(new ParallelDeadlineGroup(
+                new SequentialCommandGroup(
+                    AutoBuilder.pathfindThenFollowPath(
+                        PathPlannerPath.fromPathFile("ToTrap3"), Constants.defaultPathConstraints),
+                    new WaitUntilCommand(() -> riseToTrap3Angle.isFinished()).withTimeout(2),
+                    midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
+                ),
+                riseToTrap3Angle,
+                shooter.shootRepeatedly()
+            ).finallyDo(() -> midIntake.rawMove(0)));
+        } catch (IOException exception) {
+            System.out.println("[ERROR] IOException. Does this file exist? " + exception.toString());
+        } catch (ParseException exception) {
+            System.out.println("[ERROR] ParseException. Did you use PathPlanner? " + exception.toString());
+        }
         manualStartShooterBtn.whileTrue(shooter.run(() -> shooter.reverse()).andThen(shooter.idle()));
         autoAmpBtn.onTrue(autoAmpCommand);
+
+        swerve.registerTelemetry(logger::telemeterize);
     }
 
     /** 

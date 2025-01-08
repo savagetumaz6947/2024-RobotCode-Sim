@@ -36,7 +36,7 @@ public final class Constants {
         //     new AprilTag(1, new Pose3d(1.5, 2, 0.5, new Rotation3d(0, 0, Math.PI)))
         // ), 16.4846, 8.1026);
 
-        public static final AprilTagFieldLayout fieldLayout = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
+        public static final AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
     }
 
     public static final class GameObjects {

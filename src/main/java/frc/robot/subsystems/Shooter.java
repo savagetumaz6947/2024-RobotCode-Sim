@@ -8,15 +8,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.drivetrain.Swerve;
 
 public class Shooter extends SubsystemBase {
     private SparkMax up = new SparkMax(62, MotorType.kBrushless);
     private SparkMax down = new SparkMax(61, MotorType.kBrushless);
 
-    private Swerve swerve;
+    private CommandSwerveDrivetrain swerve;
 
-    public Shooter(Swerve swerve) {
+    public Shooter(CommandSwerveDrivetrain swerve) {
         this.swerve = swerve;
     }
 

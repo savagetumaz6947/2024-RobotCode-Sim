@@ -3,11 +3,11 @@ package frc.robot.commands.Intake;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Vision;
-import frc.robot.subsystems.drivetrain.Swerve;
 
 public class AutoAimNote extends PIDCommand {
-    public AutoAimNote(Swerve swerve, Vision intakeVision) {
+    public AutoAimNote(CommandSwerveDrivetrain swerve, Vision intakeVision) {
         super(new PIDController(0.08, 0, 0), // TODO: testing
             () -> {
                 if (intakeVision.hasTargets()) {
@@ -18,7 +18,7 @@ public class AutoAimNote extends PIDCommand {
             },
             0,
             (double vyMetersPerSecond) -> {
-                swerve.driveChassis(new ChassisSpeeds(0, vyMetersPerSecond, 0));
+                swerve.applyRequest(new ChassisSpeeds(0, vyMetersPerSecond, 0));
             },
             swerve
         );

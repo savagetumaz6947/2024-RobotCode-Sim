@@ -5,20 +5,20 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
-import frc.robot.subsystems.drivetrain.Swerve;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class AutoAimToShoot extends PIDCommand {
-    public AutoAimToShoot(Swerve swerve) {
+    public AutoAimToShoot(CommandSwerveDrivetrain swerve) {
         super(new PIDController(8, .5, 1.0),
             () -> {
                 if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
-                    return swerve.getPose().getRotation().getDegrees();
+                    return swerve.getState().Pose.getRotation().getDegrees();
                 }
-                return (swerve.getPose().getRotation().getDegrees() + 360) % 360;
+                return (swerve.getState().Pose.getRotation().getDegrees() + 360) % 360;
             },
             () -> Math.toDegrees(swerve.getAngleToSpeaker()),
             (double omega_per_second) -> {
-                swerve.driveChassis(new ChassisSpeeds(0, 0, Math.toRadians(omega_per_second)));
+                swerve.applyRequest(new ChassisSpeeds(0, 0, Math.toRadians(omega_per_second)));
             },
             swerve
         );
