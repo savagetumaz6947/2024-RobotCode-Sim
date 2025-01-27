@@ -2,9 +2,13 @@ package frc.robot;
 
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
-import java.util.logging.Logger;
 
 import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -17,7 +21,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.XboxController.Axis;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,7 +30,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Shooter;
@@ -154,9 +158,9 @@ public class RobotContainer {
                     midIntake.rawMove(0);
                 })
                 /* PICK UP NOTE COMMAND END */,
-                swerve.run(() -> swerve.applyRequest(new ChassisSpeeds(1.5, 0, 0)))
+                swerve.run(() -> swerve.driveChassis(new ChassisSpeeds(1.5, 0, 0)))
             ),
-            swerve.runOnce(() -> swerve.applyRequest(new ChassisSpeeds(0, 0, 0)))
+            swerve.runOnce(() -> swerve.driveChassis(new ChassisSpeeds(0, 0, 0)))
         );
     private final Command autoAmpCommand =  new ParallelDeadlineGroup(
             new SequentialCommandGroup(
@@ -179,7 +183,7 @@ public class RobotContainer {
                 new WaitUntilCommand(() -> autoAimToShootCommand.isFinished()).withTimeout(2),
                 midIntake.run(() -> midIntake.rawMove(-1)).withTimeout(1)
             ),
-            autoAimToShootCommand.andThen(swerve.run(() -> swerve.applyRequest(new ChassisSpeeds(0,0,0)))),
+            autoAimToShootCommand.andThen(swerve.run(() -> swerve.driveChassis(new ChassisSpeeds(0,0,0)))),
             autoRiseToAngleCommand,
             shooter.shootRepeatedly(),
             new InstantCommand(() -> ledStrip.shoot(true))
@@ -199,6 +203,11 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(Constants.Swerve.maxSpeed);
 
     private final SwerveRequest.Idle swerveIdle = new SwerveRequest.Idle();
+
+    // BIG holds AngleSys and Intake
+    @AutoLogOutput
+    private static LoggedMechanism2d bigMech2d = new LoggedMechanism2d(2, 2);
+    public static final LoggedMechanismRoot2d bigMech2dRoot = bigMech2d.getRoot("Structure Root", 1, 0.2);
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -227,6 +236,11 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+
+        if (Robot.isSimulation()) {
+            angleSys.configureSimulation();
+            intakeAngle.configureSimulation();
+        }
     }
 
     /**
@@ -291,7 +305,7 @@ public class RobotContainer {
         manualMidIntakeDownBtn.whileTrue(midIntake.run(() -> midIntake.rawMove(1)).repeatedly().finallyDo(() -> midIntake.rawMove(0)));
         resetAngleBtn.onTrue(new InstantCommand(() -> angleSys.reset()));
         compositeKillBtn.whileTrue(new InstantCommand(() -> {
-            swerve.applyRequest(new ChassisSpeeds());
+            swerve.driveChassis(new ChassisSpeeds());
             midIntake.rawMove(0);
             bottomIntake.rawMove(0);
             shooter.stop();

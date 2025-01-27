@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.PIDCommand;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Vision;
 
+@SuppressWarnings("removal")
 public class AutoAimNote extends PIDCommand {
     public AutoAimNote(CommandSwerveDrivetrain swerve, Vision intakeVision) {
         super(new PIDController(0.08, 0, 0), // TODO: testing
@@ -18,7 +19,7 @@ public class AutoAimNote extends PIDCommand {
             },
             0,
             (double vyMetersPerSecond) -> {
-                swerve.applyRequest(new ChassisSpeeds(0, vyMetersPerSecond, 0));
+                swerve.driveChassis(new ChassisSpeeds(0, vyMetersPerSecond, 0));
             },
             swerve
         );

@@ -1,26 +1,26 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.util.PathPlannerLogging;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -28,7 +28,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.Constants;
@@ -43,13 +42,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
-    private final Field2d field = new Field2d();
-
-    private Vision s_Vision;
+    private Vision s_Vision = new Vision(Constants.Vision.cameraName, Constants.Vision.robotToCam, Constants.Vision.fieldLayout);
     private RobotConfig ppRobotConfig;
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -73,26 +69,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, modules);
-        try{
-            ppRobotConfig = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
-            // Handle exception as needed
-            e.printStackTrace();
-        }
-        s_Vision = new Vision(Constants.Vision.cameraName, Constants.Vision.robotToCam, Constants.Vision.fieldLayout);
-        AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
-                        () -> this.getState().Speeds,
-                        (speeds, feedforwards) -> this.applyRequest(speeds).execute(),
-                        Constants.autoConstants,
-                        ppRobotConfig,
-                        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-                        this);
-        PathPlannerLogging.setLogActivePathCallback(
-            (activePath) -> {
-                field.getObject("path").setPoses(activePath);
-            });
-        // TODO: Default pose is in front of the red speaker.
-        // super.resetPose(new Pose2d(new Translation2d(Meters.of(), Meters.of()), new Rotation2d(Degrees.of(2))));
+        super.resetPose(new Pose2d(Meters.of(15), Meters.of(5.6), Rotation2d.k180deg));
+        configurePPLib();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -117,24 +95,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
-        try{
-            ppRobotConfig = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
-            // Handle exception as needed
-            e.printStackTrace();
-        }
-        s_Vision = new Vision(Constants.Vision.cameraName, Constants.Vision.robotToCam, Constants.Vision.fieldLayout);
-        AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
-            () -> this.getState().Speeds,
-            (speeds, feedforwards) -> this.applyRequest(speeds),
-            Constants.autoConstants,
-            ppRobotConfig,
-            () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-            this);
-        PathPlannerLogging.setLogActivePathCallback(
-            (activePath) -> {
-                field.getObject("path").setPoses(activePath);
-            });    
+        super.resetPose(new Pose2d(Meters.of(15), Meters.of(5.6), Rotation2d.k180deg));
+        configurePPLib();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -167,27 +129,49 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
-        try{
-            ppRobotConfig = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
-            // Handle exception as needed
-            e.printStackTrace();
-        }
-        s_Vision = new Vision(Constants.Vision.cameraName, Constants.Vision.robotToCam, Constants.Vision.fieldLayout);
-        AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
-            () -> this.getState().Speeds,
-            (speeds, feedforwards) -> this.applyRequest(speeds),
-            Constants.autoConstants,
-            ppRobotConfig,
-            () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-            this);
-        PathPlannerLogging.setLogActivePathCallback(
-            (activePath) -> {
-                field.getObject("path").setPoses(activePath);
-            });
+        super.resetPose(new Pose2d(Meters.of(15), Meters.of(5.6), Rotation2d.k180deg));
+        configurePPLib();
         if (Utils.isSimulation()) {
             startSimThread();
         }
+    }
+
+    private void configurePPLib() {
+        try{
+            ppRobotConfig = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        AutoBuilder.configure(
+            () -> super.getState().Pose, // Robot pose supplier
+            this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
+            () -> super.getState().Speeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> setControl(
+                applyRobotSpeeds.withSpeeds(speeds)
+                    .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                    .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+            ), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            ppRobotConfig, // The robot configuration
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            this // Reference to this subsystem to set requirements
+        );
+        FlippingUtil.symmetryType = FlippingUtil.FieldSymmetry.kMirrored;
+        FlippingUtil.fieldSizeX = 16.54175;
+        FlippingUtil.fieldSizeY = 8.211;
     }
 
     /**
@@ -205,12 +189,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param speeds ChassisSpeeds
      * @return Command to run
      */
-    public Command applyRequest(ChassisSpeeds speeds) {
-        return this.applyRequest(() ->
-            drive.withVelocityX(speeds.vxMetersPerSecond) // Drive forward with negative Y (forward)
-                .withVelocityY(speeds.vyMetersPerSecond) // Drive left with negative X (left)
-                .withRotationalRate(speeds.omegaRadiansPerSecond) // Drive counterclockwise with negative X (left)
-        );
+    public void driveChassis(ChassisSpeeds speeds) {
+        setControl(applyRobotSpeeds.withSpeeds(speeds));
     }
 
     /**
@@ -259,8 +239,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         Optional<EstimatedRobotPose> visionPose = s_Vision.getEstimatedGlobalPose(this.getState().Pose);
         if (visionPose.isPresent()) {
-            this.addVisionMeasurement(visionPose.get().estimatedPose.toPose2d(), visionPose.get().timestampSeconds);
+            this.addVisionMeasurement(visionPose.get().estimatedPose.toPose2d(), Utils.fpgaToCurrentTime(visionPose.get().timestampSeconds));
+            Logger.recordOutput("VisionPose", visionPose.get().estimatedPose);
         }
+
+        Logger.recordOutput("RobotPose", this.getState().Pose);
     }
 
     private void startSimThread() {

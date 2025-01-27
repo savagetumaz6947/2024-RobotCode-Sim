@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
+@SuppressWarnings("removal")
 public class AutoAimToShoot extends PIDCommand {
     public AutoAimToShoot(CommandSwerveDrivetrain swerve) {
         super(new PIDController(8, .5, 1.0),
@@ -18,7 +19,7 @@ public class AutoAimToShoot extends PIDCommand {
             },
             () -> Math.toDegrees(swerve.getAngleToSpeaker()),
             (double omega_per_second) -> {
-                swerve.applyRequest(new ChassisSpeeds(0, 0, Math.toRadians(omega_per_second)));
+                swerve.driveChassis(new ChassisSpeeds(0, 0, Math.toRadians(omega_per_second)));
             },
             swerve
         );

@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.AngleSys;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
+@SuppressWarnings("removal")
 public class AutoRiseToAngle extends RiseToAngle {
     public AutoRiseToAngle(AngleSys angleSys, CommandSwerveDrivetrain swerve) {
         super(() -> angleSys.getAutoAngle(swerve.getDistToSpeaker()), angleSys);

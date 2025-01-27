@@ -1,40 +1,57 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Millimeters;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.sim.TalonFXSimState;
-import com.revrobotics.RelativeEncoder;
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.sim.SparkRelativeEncoderSim;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkRelativeEncoder;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
+import frc.lib.util.SimmableDigitalInput;
 
 public class AngleSys extends SubsystemBase {
     private TalonFX leftMotor = new TalonFX(41, "canivore");
     private TalonFX rightMotor = new TalonFX(42, "canivore");
-    private TalonFXSimState leftMotorSim;
-    private TalonFXSimState rightMotorSim;
 
     private SparkMax sparkMaxEncoderOnly = new SparkMax(43, MotorType.kBrushed);
-    private DigitalInput downLimit = new DigitalInput(9);
-    private DigitalInput upLimit = new DigitalInput(8);
-    private RelativeEncoder encoder;
+    private SimmableDigitalInput downLimit = new SimmableDigitalInput(9, () -> !sim.hasHitLowerLimit());
+    private SimmableDigitalInput upLimit = new SimmableDigitalInput(8, () -> !sim.hasHitUpperLimit());
+
+    private SparkRelativeEncoder encoder;
+    private SparkRelativeEncoderSim encoderSim;
+
+    private static SingleJointedArmSim sim;
+
+    @AutoLogOutput
+    private Pose3d simPose = new Pose3d();
 
     public AngleSys() {
-        if (Robot.isSimulation()) {
-            leftMotorSim = leftMotor.getSimState();
-            rightMotorSim = rightMotor.getSimState();
-        }
-
-        encoder = sparkMaxEncoderOnly.getEncoder();
+        encoder = (SparkRelativeEncoder) sparkMaxEncoderOnly.getEncoder();
 
         TalonFXConfigurator leftConfig = leftMotor.getConfigurator();
         TalonFXConfigurator rightConfig = rightMotor.getConfigurator();
@@ -48,8 +65,9 @@ public class AngleSys extends SubsystemBase {
         encoder.setPosition(0);
     }
 
+    @AutoLogOutput
     public double getAngle() {
-        return -encoder.getPosition() * 360 + 30;
+        return -encoder.getPosition() * 360 + 29;
     }
 
     public boolean getDownLimit() {
@@ -88,9 +106,36 @@ public class AngleSys extends SubsystemBase {
         SmartDashboard.putNumber("AngleSys/EncoderAngleDeg", getAngle());
     }
 
+    private Angle fourBarConversion(Angle motorBarAngle) {
+        double y = motorBarAngle.in(Radians);
+        return Radians.of(-Math.asin((37*Math.sqrt(2)*(10*Math.cos(y)+29))/(60*Math.sqrt(555*Math.cos(y)+797)))+Math.atan((15*Math.sin(y))/(15*Math.cos(y)+37))+Math.PI/2);
+    }
+
+    public void configureSimulation() {
+        sim = new SingleJointedArmSim(
+            DCMotor.getFalcon500(2), 100, 0.2, 99999999,
+            Units.degreesToRadians(-9.896), Units.degreesToRadians(104.4576547), false, Units.degreesToRadians(-9.896));
+        
+        leftMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
+        encoderSim = new SparkRelativeEncoderSim(sparkMaxEncoderOnly);
+    }
+
     @Override
     public void simulationPeriodic() {
-        leftMotorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-        rightMotorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+        leftMotor.getSimState().setSupplyVoltage(RobotController.getBatteryVoltage());
+        sim.setInputVoltage(leftMotor.getSimState().getMotorVoltage());
+        sim.update(0.02);
+
+        Logger.recordOutput("AngleSys/SimDeg", fourBarConversion(Radians.of(sim.getAngleRads())).in(Degrees));
+
+        Angle newDeg = fourBarConversion(Radians.of(sim.getAngleRads())).plus(Degrees.of(10.3));
+        simPose = new Pose3d(
+            new Translation3d(Millimeters.of(308.198), Meters.of(0), Millimeters.of(207.372 + 50.8)),
+            new Rotation3d(Degrees.of(0), newDeg, Degrees.of(0)));
+
+        leftMotor.getSimState().setRawRotorPosition(Radians.of(sim.getAngleRads() * 100));
+        leftMotor.getSimState().setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec() * 100));
+
+        encoderSim.setPosition(-Units.degreesToRotations(newDeg.in(Degrees) - 29));
     }
 }

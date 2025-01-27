@@ -6,6 +6,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import frc.robot.subsystems.AngleSys;
 
+@SuppressWarnings("removal")
 public class RiseToAngle extends PIDCommand {
     public RiseToAngle(DoubleSupplier targetAngleDegrees, AngleSys angleSys) {
         super(
