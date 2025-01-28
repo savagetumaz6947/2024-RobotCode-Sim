@@ -1,5 +1,9 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Millimeters;
+
+import org.ironmaple.simulation.IntakeSimulation;
+
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -16,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 
 public class BottomIntake extends SubsystemBase {
     private SparkMax intakeU = new SparkMax(55, MotorType.kBrushless);
@@ -25,6 +30,8 @@ public class BottomIntake extends SubsystemBase {
     private static FlywheelSim sim;
     private SparkMaxSim intakeUSim;
     private SparkMaxSim intakeDSim;
+
+    public static IntakeSimulation intakeSim;
 
     private final Vision camera = new Vision("IntakeCamera");
 
@@ -39,6 +46,12 @@ public class BottomIntake extends SubsystemBase {
 
     public void rawMove (double speed) {
         intakeU.set(-speed);
+        if (Robot.isSimulation()) {
+            if (speed > 0)
+                intakeSim.startIntake();
+            else
+                intakeSim.stopIntake();
+        }
     }
 
     public Command stop() {
@@ -52,6 +65,13 @@ public class BottomIntake extends SubsystemBase {
 
         intakeUSim = new SparkMaxSim(intakeU, DCMotor.getNEO(1));
         intakeDSim = new SparkMaxSim(intakeD, DCMotor.getNEO(1));
+
+        intakeSim = IntakeSimulation.OverTheBumperIntake("Note", 
+            CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive,
+            Millimeters.of(515.4),
+            Millimeters.of(150),
+            IntakeSimulation.IntakeSide.FRONT,
+            1);
     }
 
     @Override

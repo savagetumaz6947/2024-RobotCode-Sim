@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -30,6 +31,8 @@ public class Vision extends SubsystemBase {
     private SimCameraProperties simCameraProperties = new SimCameraProperties();
     private Pose2d prevPose = new Pose2d(); // this is only used for simulation
 
+    private Optional<Supplier<Pose2d>> maplePoseSupplier = Optional.empty();
+
     /**
      * Constructs a Vision object with no transformation (primarily for use with Object Detection)
      * @param cameraName The name of the PhotonCamera
@@ -54,6 +57,10 @@ public class Vision extends SubsystemBase {
      * @param aprilTagFieldLayout The custom AprilTagFieldLayout
      */
     public Vision(String cameraName, Transform3d robotToCam, AprilTagFieldLayout aprilTagFieldLayout) {
+        this(cameraName, robotToCam, aprilTagFieldLayout, Optional.empty());
+    }
+
+    public Vision(String cameraName, Transform3d robotToCam, AprilTagFieldLayout aprilTagFieldLayout, Optional<Supplier<Pose2d>> maplePoseSupplier) {
         camera = new PhotonCamera(cameraName);
         photonEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_LAST_POSE);
@@ -69,6 +76,12 @@ public class Vision extends SubsystemBase {
 
             simCam = new PhotonCameraSim(camera, simCameraProperties);
             sim.addCamera(simCam, robotToCam);
+
+            if (maplePoseSupplier.isEmpty()) {
+                System.out.println("[WARN] Vision.java NO MAPLE POSE SUPPLIER GIVEN. The simulation will assume its pose to be the drivetrain pose.");
+            } else {
+                this.maplePoseSupplier = maplePoseSupplier;
+            }
         }
     }
 
@@ -90,7 +103,12 @@ public class Vision extends SubsystemBase {
 
     @Override
     public void simulationPeriodic() {
-        sim.update(prevPose);
+        if (maplePoseSupplier.isPresent()) {
+            sim.update(maplePoseSupplier.get().get());
+        }
+        else {
+            sim.update(prevPose);
+        }
     }
 
     /**

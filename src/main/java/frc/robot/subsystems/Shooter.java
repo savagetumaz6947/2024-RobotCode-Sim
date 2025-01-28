@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkMax;
+
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -21,7 +24,7 @@ public class Shooter extends SubsystemBase {
 
     private CommandSwerveDrivetrain swerve;
 
-    private static FlywheelSim sim;
+    public static FlywheelSim sim;
     private SparkMaxSim upSim;
     private SparkMaxSim downSim;
 
@@ -95,7 +98,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void configureSimulation() {
-        sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getNEO(1), 0.1, 10), DCMotor.getNEO(1));
+        sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getNEO(1), 0.01, 3), DCMotor.getNEO(1));
 
         upSim = new SparkMaxSim(up, DCMotor.getNEO(1));
         downSim = new SparkMaxSim(down, DCMotor.getNEO(1));
@@ -106,14 +109,14 @@ public class Shooter extends SubsystemBase {
         sim.setInputVoltage(upSim.getAppliedOutput() * RobotController.getBatteryVoltage());
         sim.update(0.02);
 
-        upSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 10), RobotController.getBatteryVoltage(), 0.02);
-        downSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 10), RobotController.getBatteryVoltage(), 0.02);
+        upSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 3), RobotController.getBatteryVoltage(), 0.02);
+        downSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 3), RobotController.getBatteryVoltage(), 0.02);
     }
 
     @Override
     public void periodic() {
-        // Logger.recordOutput("Shooter/UP_RPM",  up.getEncoder().getVelocity());
-        // Logger.recordOutput("Shooter/DOWN_RPM",  up.getEncoder().getVelocity());
+        Logger.recordOutput("Shooter/UP_RPM",  up.getEncoder().getVelocity());
+        Logger.recordOutput("Shooter/DOWN_RPM",  up.getEncoder().getVelocity());
 
         SmartDashboard.putBoolean("Shooter In Range", inRange());
     }

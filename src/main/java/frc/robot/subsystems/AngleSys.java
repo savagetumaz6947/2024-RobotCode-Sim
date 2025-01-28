@@ -44,7 +44,7 @@ public class AngleSys extends SubsystemBase {
     private SparkRelativeEncoder encoder;
     private SparkRelativeEncoderSim encoderSim;
 
-    private static SingleJointedArmSim sim;
+    public static SingleJointedArmSim sim;
 
     @AutoLogOutput
     private Pose3d simPose = new Pose3d();
@@ -111,7 +111,7 @@ public class AngleSys extends SubsystemBase {
         SmartDashboard.putNumber("AngleSys/EncoderAngleDeg", getAngle());
     }
 
-    private Angle fourBarConversion(Angle motorBarAngle) {
+    public static Angle fourBarConversion(Angle motorBarAngle) {
         // double sinTheta = Math.sin(motorBarAngle.in(Radians));
         // double cosTheta = Math.cos(motorBarAngle.in(Radians));
 
@@ -151,7 +151,7 @@ public class AngleSys extends SubsystemBase {
 
     public void configureSimulation() {
         sim = new SingleJointedArmSim(
-            DCMotor.getFalcon500(2), 100, 0.2, 99999999,
+            DCMotor.getFalcon500(2), 100, 0.05, 2,
             Units.degreesToRadians(-18), Units.degreesToRadians(107.78), false, Units.degreesToRadians(-18));
         
         leftMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
@@ -187,5 +187,12 @@ public class AngleSys extends SubsystemBase {
         leftMotor.getSimState().setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec() * 100));
 
         encoderSim.setPosition(-Units.degreesToRotations(newDeg.in(Degrees) - 29));
+
+        double phi = AngleSys.fourBarConversion(Radians.of(AngleSys.sim.getAngleRads())).plus(Degrees.of(10.3)).in(Radians);
+        Pose3d exitPose = new Pose3d(
+            new Translation3d(Millimeters.of(+308.198 - 500 * Math.cos(phi)), Millimeters.of(0), Millimeters.of(207.372 + 50.8 + 500 * Math.sin(phi))),
+            new Rotation3d(0,phi-Math.PI,0)
+        );
+        Logger.recordOutput("Debug/ExitPose", exitPose);
     }
 }

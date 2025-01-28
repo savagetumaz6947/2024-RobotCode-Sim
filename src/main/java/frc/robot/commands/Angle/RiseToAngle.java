@@ -2,6 +2,8 @@ package frc.robot.commands.Angle;
 
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import frc.robot.subsystems.AngleSys;
@@ -27,8 +29,8 @@ public class RiseToAngle extends PIDCommand {
     @Override
     public void execute() {
         super.execute();
-        // Logger.recordOutput("Commands/Angle/RiseToAngle/Setpoint", getController().getSetpoint());
-        // Logger.recordOutput("Commands/Angle/RiseToAngle/AtSetpoint", getController().atSetpoint());
+        Logger.recordOutput("Commands/Angle/RiseToAngle/Setpoint", getController().getSetpoint());
+        Logger.recordOutput("Commands/Angle/RiseToAngle/AtSetpoint", getController().atSetpoint());
     }
 
 }

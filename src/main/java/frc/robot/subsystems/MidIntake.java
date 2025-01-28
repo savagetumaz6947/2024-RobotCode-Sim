@@ -1,5 +1,13 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Millimeters;
+import static edu.wpi.first.units.Units.Radians;
+
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.ColorSensorV3;
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -9,6 +17,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -28,6 +39,9 @@ public class MidIntake extends SubsystemBase {
 
     private static FlywheelSim sim;
     private SparkMaxSim motorSim;
+
+    @AutoLogOutput(key = "FieldSimulation/NoteOnRobot")
+    private Pose3d noteOnRobot = new Pose3d();
     
     public MidIntake () {
         config.idleMode(IdleMode.kBrake);
@@ -42,8 +56,7 @@ public class MidIntake extends SubsystemBase {
         if (Robot.isReal())
             return getColor().red > 0.32;
         else
-        // TODO: simulate hasNote
-            return false;
+            return BottomIntake.intakeSim.getGamePiecesAmount() != 0;
     }
 
     private Color getColor() {
@@ -62,11 +75,22 @@ public class MidIntake extends SubsystemBase {
         sim.update(0.02);
 
         motorSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 5), RobotController.getBatteryVoltage(), 0.02);
+
+        if (hasNote()) {
+            double currAngle = AngleSys.fourBarConversion(Radians.of(AngleSys.sim.getAngleRads())).plus(Degrees.of(10.3)).in(Radians);
+            // These values are measured using CAD and trignometry.
+            noteOnRobot = new Pose3d(CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose()).plus(
+                new Transform3d(Millimeters.of(308.198 - 173.205 * Math.cos(currAngle)), Meters.of(0), Millimeters.of(215 + 50.8 + 173.205 * Math.sin(currAngle)),
+                new Rotation3d(Degrees.of(0), Radians.of(currAngle), Degrees.of(0))));
+        } else {
+            noteOnRobot = new Pose3d();
+        }
     }
 
     @Override
     public void periodic() {
         SmartDashboard.putString("Color", getColor().toString());
+        Logger.recordOutput("HasNote", hasNote());
         SmartDashboard.putBoolean("HasNote", hasNote());
     }
 }
