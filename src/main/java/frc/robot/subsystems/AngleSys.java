@@ -167,6 +167,8 @@ public class AngleSys extends SubsystemBase {
         Logger.recordOutput("AngleSys/SimDeg", fourBarConversion(Radians.of(sim.getAngleRads())).in(Degrees));
 
         Angle newDeg = fourBarConversion(Radians.of(sim.getAngleRads())).plus(Degrees.of(10.3));
+
+        // Translation values are obtained from the Robot CAD.
         simPose = new Pose3d(
             new Translation3d(Millimeters.of(308.198), Meters.of(0), Millimeters.of(207.372 + 50.8)),
             new Rotation3d(Degrees.of(0), newDeg, Degrees.of(0)));
@@ -175,6 +177,7 @@ public class AngleSys extends SubsystemBase {
             new Translation3d(Millimeters.of(-73.6), Millimeters.of(0), Millimeters.of(231.6 + 50.8)),
             new Rotation3d(Degrees.of(0), Radians.of(-sim.getAngleRads()), Degrees.of(180))
         );
+        // The simFourBarTwoPose is obtained by trignometry.
         simFourBarTwoPose = new Pose3d(
             new Translation3d(Millimeters.of(-73.6 - 150 * Math.cos(sim.getAngleRads())), Millimeters.of(0), Millimeters.of(231.6 + 50.8 + 150 * Math.sin(sim.getAngleRads()))),
             new Rotation3d(Degrees.of(0), Radians.of(-Math.asin((450 * Math.sin(fourBarConversion(Radians.of(sim.getAngleRads())).in(Radians)) - 24.219 - 150 * Math.sin(sim.getAngleRads())) / 200)), Degrees.of(0))

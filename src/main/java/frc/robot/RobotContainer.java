@@ -236,6 +236,10 @@ public class RobotContainer {
         if (Robot.isSimulation()) {
             angleSys.configureSimulation();
             intakeAngle.configureSimulation();
+            bottomIntake.configureSimulation();
+            midIntake.configureSimulation();
+            shooter.configureSimulation();
+            climber.configureSimulation();
         }
     }
 

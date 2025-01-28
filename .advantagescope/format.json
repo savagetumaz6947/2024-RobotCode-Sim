@@ -1,0 +1,237 @@
+{
+  "hubs": [
+    {
+      "x": 2039,
+      "y": 450,
+      "width": 1938,
+      "height": 1050,
+      "state": {
+        "sidebar": {
+          "width": 297,
+          "expanded": [
+            "/Pose",
+            "/PathPlanner",
+            "/DriveState",
+            "/SmartDashboard",
+            "/SmartDashboard/Elevator",
+            "/SmartDashboard/Elevator/elevator",
+            "/SmartDashboard/Elevator/elevator/Mechanism/Elevator Root",
+            "/SmartDashboard/Elevator/elevator/Mechanism/Elevator Root/Elevator",
+            "/SmartDashboard/Sim",
+            "/SmartDashboard/Arm",
+            "/SmartDashboard/Arm/arm",
+            "/SmartDashboard/Arm/sim",
+            "/SmartDashboard/Arm/motor",
+            "/SmartDashboard/Pivot",
+            "/SmartDashboard/Pivot/Pivot",
+            "/RealOutputs",
+            "/RealOutputs/Sim",
+            "/RealOutputs/RobotContainer",
+            "/RealOutputs/AngleSys",
+            "/RealOutputs/Commands",
+            "/RealOutputs/Commands/Angle",
+            "/RealOutputs/Commands/Angle/RiseToAngle",
+            "/RealOutputs/AngleSys/AngleSimPose",
+            "/RealOutputs/IntakeAngle",
+            "/RealOutputs/IntakeAngle/motor",
+            "/RealOutputs/Climber"
+          ]
+        },
+        "tabs": {
+          "selected": 1,
+          "tabs": [
+            {
+              "type": 0,
+              "title": "",
+              "controller": null,
+              "controllerUUID": "l0u46hqusupdfmk6nbng4hguh4laccgt",
+              "renderer": "#/",
+              "controlsHeight": 0
+            },
+            {
+              "type": 3,
+              "title": "3D Field",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "/RealOutputs/AngleSys/ZeroPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {
+                      "model": "Parasaur"
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarOnePose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarTwoPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/IntakeAngle/SimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/LeftSimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/RightSimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "robot",
+                    "logKey": "/RealOutputs/RobotPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "Parasaur"
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarOnePose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarTwoPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/IntakeAngle/SimPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/LeftSimPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/RightSimPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  }
+                ],
+                "game": "2024 Field",
+                "origin": "blue"
+              },
+              "controllerUUID": "tlsjuebyjot2qb3fhnwy29wam4hijg4z",
+              "renderer": {
+                "cameraIndex": -3,
+                "orbitFov": 50,
+                "cameraPosition": [
+                  -9.724361528990222,
+                  1.5747999999999982,
+                  -2.4551955105842396
+                ],
+                "cameraTarget": [
+                  0,
+                  0.5,
+                  0
+                ]
+              },
+              "controlsHeight": 200
+            },
+            {
+              "type": 1,
+              "title": "Line Graph",
+              "controller": {
+                "leftSources": [
+                  {
+                    "type": "stepped",
+                    "logKey": "/RealOutputs/Climber/Left",
+                    "logType": "Number",
+                    "visible": true,
+                    "options": {
+                      "color": "#2b66a2",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "rightSources": [],
+                "discreteSources": [],
+                "leftLockedRange": null,
+                "rightLockedRange": null,
+                "leftUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "rightUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "leftFilter": 0,
+                "rightFilter": 0
+              },
+              "controllerUUID": "ht8mafs2nqpb9mtwew64tbwab0s25cmm",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 10,
+              "title": "Mechanism",
+              "controller": [
+                {
+                  "type": "mechanism",
+                  "logKey": "/RealOutputs/RobotContainer/BigMech2d",
+                  "logType": "Mechanism2d",
+                  "visible": true,
+                  "options": {}
+                }
+              ],
+              "controllerUUID": "sh6gi7qsz7v5k3tpga49sswv2uc1x9bx",
+              "renderer": null,
+              "controlsHeight": 200
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "satellites": [],
+  "version": "4.1.0"
+}

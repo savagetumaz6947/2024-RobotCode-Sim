@@ -1,9 +1,15 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -14,6 +20,10 @@ public class Shooter extends SubsystemBase {
     private SparkMax down = new SparkMax(61, MotorType.kBrushless);
 
     private CommandSwerveDrivetrain swerve;
+
+    private static FlywheelSim sim;
+    private SparkMaxSim upSim;
+    private SparkMaxSim downSim;
 
     public Shooter(CommandSwerveDrivetrain swerve) {
         this.swerve = swerve;
@@ -82,6 +92,22 @@ public class Shooter extends SubsystemBase {
 
     public boolean rpmOkForAmp() {
         return up.getEncoder().getVelocity() <= -2400;
+    }
+
+    public void configureSimulation() {
+        sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getNEO(1), 0.1, 10), DCMotor.getNEO(1));
+
+        upSim = new SparkMaxSim(up, DCMotor.getNEO(1));
+        downSim = new SparkMaxSim(down, DCMotor.getNEO(1));
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        sim.setInputVoltage(upSim.getAppliedOutput() * RobotController.getBatteryVoltage());
+        sim.update(0.02);
+
+        upSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 10), RobotController.getBatteryVoltage(), 0.02);
+        downSim.iterate(Units.radiansPerSecondToRotationsPerMinute(sim.getAngularVelocityRadPerSec() * 10), RobotController.getBatteryVoltage(), 0.02);
     }
 
     @Override

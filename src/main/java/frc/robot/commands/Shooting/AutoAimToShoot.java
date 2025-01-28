@@ -23,7 +23,7 @@ public class AutoAimToShoot extends PIDCommand {
             },
             swerve
         );
-        getController().setTolerance(1);
+        getController().setTolerance(2);
     }
 
     @Override
