@@ -27,7 +27,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -49,6 +48,12 @@ public class AngleSys extends SubsystemBase {
 
     @AutoLogOutput
     private Pose3d simPose = new Pose3d();
+    @AutoLogOutput
+    private Pose3d simFourBarOnePose = new Pose3d();
+    @AutoLogOutput
+    private Pose3d simFourBarTwoPose = new Pose3d();
+    @AutoLogOutput
+    private Pose3d zeroPose = new Pose3d();
 
     public AngleSys() {
         encoder = (SparkRelativeEncoder) sparkMaxEncoderOnly.getEncoder();
@@ -107,14 +112,47 @@ public class AngleSys extends SubsystemBase {
     }
 
     private Angle fourBarConversion(Angle motorBarAngle) {
+        // double sinTheta = Math.sin(motorBarAngle.in(Radians));
+        // double cosTheta = Math.cos(motorBarAngle.in(Radians));
+
+        // // Define the equation to solve for phi
+        // UnivariateFunction equation = (double phi) -> {
+        //     double cosPhi = Math.cos(phi);
+        //     double sinPhi = Math.sin(phi);
+        //     return Math.pow(450 * cosPhi - 380 - 150 * cosTheta, 2) + Math.pow(450 * sinPhi - 24.219 - 150 * sinTheta, 2) - Math.pow(200, 2);
+        // };
+
+        // // Use BrentSolver to find the root
+        // BrentSolver solver = new BrentSolver(1e-10, 1e-8);
+        // double lowerBound = Units.degreesToRadians(20);
+        // double upperBound = Math.PI/2;
+
+        // try {
+        //     return Radians.of(solver.solve(1000, equation, lowerBound, upperBound));
+        // } catch (Exception e) {
+        //     System.out.println("Crashed THETA: " + motorBarAngle.in(Degrees));
+        //     throw new IllegalArgumentException("No solution found for the given y.", e);
+        // }
+
+        // ----- The above code uses https://mvnrepository.com/artifact/org.apache.commons/commons-math3 and shows the original equation used to calculate PHI based on THETA.
+        // By using the constraints and the solve function of TI-nspire CAS, we obtain the mathematical expression below.
+
         double y = motorBarAngle.in(Radians);
-        return Radians.of(-Math.asin((37*Math.sqrt(2)*(10*Math.cos(y)+29))/(60*Math.sqrt(555*Math.cos(y)+797)))+Math.atan((15*Math.sin(y))/(15*Math.cos(y)+37))+Math.PI/2);
+        return Radians.of(Math.atan(
+            (Math.sin(y)+0.16146) /
+            (Math.cos(y)+2.53333))
+            
+            - Math.asin(
+                (0.375154*(Math.cos(y)+0.063734*(Math.sin(y)+45.417))) /
+                (Math.sqrt(Math.cos(y)+0.063734*(Math.sin(y)+23.0517))))
+            
+            + Math.PI*0.5);
     }
 
     public void configureSimulation() {
         sim = new SingleJointedArmSim(
             DCMotor.getFalcon500(2), 100, 0.2, 99999999,
-            Units.degreesToRadians(-9.896), Units.degreesToRadians(104.4576547), false, Units.degreesToRadians(-9.896));
+            Units.degreesToRadians(-18), Units.degreesToRadians(107.78), false, Units.degreesToRadians(-18));
         
         leftMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
         encoderSim = new SparkRelativeEncoderSim(sparkMaxEncoderOnly);
@@ -132,6 +170,15 @@ public class AngleSys extends SubsystemBase {
         simPose = new Pose3d(
             new Translation3d(Millimeters.of(308.198), Meters.of(0), Millimeters.of(207.372 + 50.8)),
             new Rotation3d(Degrees.of(0), newDeg, Degrees.of(0)));
+
+        simFourBarOnePose = new Pose3d(
+            new Translation3d(Millimeters.of(-73.6), Millimeters.of(0), Millimeters.of(231.6 + 50.8)),
+            new Rotation3d(Degrees.of(0), Radians.of(-sim.getAngleRads()), Degrees.of(180))
+        );
+        simFourBarTwoPose = new Pose3d(
+            new Translation3d(Millimeters.of(-73.6 - 150 * Math.cos(sim.getAngleRads())), Millimeters.of(0), Millimeters.of(231.6 + 50.8 + 150 * Math.sin(sim.getAngleRads()))),
+            new Rotation3d(Degrees.of(0), Radians.of(-Math.asin((450 * Math.sin(fourBarConversion(Radians.of(sim.getAngleRads())).in(Radians)) - 24.219 - 150 * Math.sin(sim.getAngleRads())) / 200)), Degrees.of(0))
+        );
 
         leftMotor.getSimState().setRawRotorPosition(Radians.of(sim.getAngleRads() * 100));
         leftMotor.getSimState().setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec() * 100));
