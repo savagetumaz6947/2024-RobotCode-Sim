@@ -1,10 +1,10 @@
 {
   "hubs": [
     {
-      "x": 2039,
-      "y": 450,
-      "width": 1938,
-      "height": 1050,
+      "x": 473,
+      "y": 250,
+      "width": 1105,
+      "height": 654,
       "state": {
         "sidebar": {
           "width": 297,
@@ -34,7 +34,12 @@
             "/RealOutputs/AngleSys/AngleSimPose",
             "/RealOutputs/IntakeAngle",
             "/RealOutputs/IntakeAngle/motor",
-            "/RealOutputs/Climber"
+            "/RealOutputs/Climber",
+            "/RealOutputs/FieldSimulation",
+            "/RealOutputs/CommandSwerveDrivetrain",
+            "/RealOutputs/Debug",
+            "/RealOutputs/Shooter",
+            "/RealOutputs/PerfectAngleSim"
           ]
         },
         "tabs": {
@@ -105,8 +110,69 @@
                     "options": {}
                   },
                   {
-                    "type": "robot",
+                    "type": "ghost",
                     "logKey": "/RealOutputs/RobotPose",
+                    "logType": "Pose2d",
+                    "visible": false,
+                    "options": {
+                      "model": "Parasaur",
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarOnePose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/AngleSys/SimFourBarTwoPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/IntakeAngle/SimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/LeftSimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "/RealOutputs/Climber/RightSimPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {}
+                  },
+                  {
+                    "type": "gamePiece",
+                    "logKey": "/RealOutputs/FieldSimulation/NotesPositions",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "variant": "Note"
+                    }
+                  },
+                  {
+                    "type": "robot",
+                    "logKey": "/RealOutputs/FieldSimulation/PhysicalRobotPose",
                     "logType": "Pose2d",
                     "visible": true,
                     "options": {
@@ -154,6 +220,25 @@
                     "logType": "Pose3d",
                     "visible": true,
                     "options": {}
+                  },
+                  {
+                    "type": "gamePiece",
+                    "logKey": "/RealOutputs/FieldSimulation/NoteOnRobot",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {
+                      "variant": "Note"
+                    }
+                  },
+                  {
+                    "type": "cone",
+                    "logKey": "/RealOutputs/Debug/ExitPose",
+                    "logType": "Pose3d",
+                    "visible": false,
+                    "options": {
+                      "color": "#00ff00",
+                      "position": "center"
+                    }
                   }
                 ],
                 "game": "2024 Field",
@@ -161,19 +246,54 @@
               },
               "controllerUUID": "tlsjuebyjot2qb3fhnwy29wam4hijg4z",
               "renderer": {
-                "cameraIndex": -3,
+                "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  -9.724361528990222,
-                  1.5747999999999982,
-                  -2.4551955105842396
+                  -1.9355102945408387,
+                  10.180392809953888,
+                  -8.81497512694842
                 ],
                 "cameraTarget": [
-                  0,
-                  0.5,
-                  0
+                  -0.9543628177571171,
+                  0.3462569421069556,
+                  -0.06413966046138529
                 ]
               },
+              "controlsHeight": 287
+            },
+            {
+              "type": 9,
+              "title": "Swerve",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "states",
+                    "logKey": "/RealOutputs/CommandSwerveDrivetrain/Module States",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff0000",
+                      "arrangement": "0,1,2,3"
+                    }
+                  },
+                  {
+                    "type": "states",
+                    "logKey": "/RealOutputs/CommandSwerveDrivetrain/Module Targets",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#0000ff",
+                      "arrangement": "0,1,2,3"
+                    }
+                  }
+                ],
+                "maxSpeed": 5,
+                "sizeX": 0.65,
+                "sizeY": 0.65,
+                "orientation": 1
+              },
+              "controllerUUID": "5wowqbd88nz8ivk239y8cl893jmv6olt",
+              "renderer": null,
               "controlsHeight": 200
             },
             {
@@ -183,11 +303,11 @@
                 "leftSources": [
                   {
                     "type": "stepped",
-                    "logKey": "/RealOutputs/Climber/Left",
+                    "logKey": "/RealOutputs/Shooter/DOWN_RPM",
                     "logType": "Number",
                     "visible": true,
                     "options": {
-                      "color": "#2b66a2",
+                      "color": "#e5b31b",
                       "size": "normal"
                     }
                   }

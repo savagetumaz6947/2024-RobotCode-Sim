@@ -11,9 +11,6 @@ import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.crescendo2024.NoteOnFly;
 import org.json.simple.parser.ParseException;
-import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -22,11 +19,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -196,24 +190,27 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     if (Robot.isSimulation()) {
                         double phi = AngleSys.fourBarConversion(Radians.of(AngleSys.sim.getAngleRads())).plus(Degrees.of(10.3)).in(Radians);
-                        SimulatedArena.getInstance().addGamePieceProjectile(new NoteOnFly(
-                            // Specify the position of the chassis when the note is launched
-                            CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose().getTranslation(),
-                            // Specify the translation of the shooter from the robot center (in the shooter’s reference frame)
-                            new Translation2d(Millimeters.of(+308.198 - 500 * Math.cos(phi)), Millimeters.of(0)),
-                            // Specify the field-relative speed of the chassis, adding it to the initial velocity of the projectile
-                            new ChassisSpeeds(),
-                            // The shooter facing direction is the same as the robot’s facing direction
-                            CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose().getRotation(),
-                            // Initial height of the flying note
-                            Millimeters.of(207.372 + 50.8 + 500 * Math.sin(phi)).in(Meters),
-                            // Millimeters.of(0).in(Meters),
-                            // The launch speed is proportional to the RPM; assumed to be 16 meters/second at 6000 RPM
-                            Shooter.sim.getAngularVelocityRPM() / 6000 * 26,
-                            // The angle at which the note is launched
-                            -phi
-                        ).asSpeakerShotNote(() -> System.out.println("Scored in Speaker! +2 Points.")).enableBecomesGamePieceOnFieldAfterTouchGround());
-                    }        
+                        if (BottomIntake.intakeSim.obtainGamePieceFromIntake()) {
+                            SimulatedArena.getInstance().addGamePieceProjectile(new NoteOnFly(
+                                // Specify the position of the chassis when the note is launched
+                                CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose().getTranslation(),
+                                // Specify the translation of the shooter from the robot center (in the shooter’s reference frame)
+                                new Translation2d(Millimeters.of(+308.198 - 500 * Math.cos(phi)), Millimeters.of(0)),
+                                // Specify the field-relative speed of the chassis, adding it to the initial velocity of the projectile
+                                new ChassisSpeeds(),
+                                // The shooter facing direction is the same as the robot’s facing direction
+                                CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose().getRotation(),
+                                // Initial height of the flying note
+                                Millimeters.of(207.372 + 50.8 + 500 * Math.sin(phi)).in(Meters),
+                                // The launch speed is a tested value
+                                -11.49,
+                                // The angle at which the note is launched
+                                -phi
+                            ).asSpeakerShotNote(() -> System.out.println("Scored in Speaker! +2 Points.")).enableBecomesGamePieceOnFieldAfterTouchGround());
+                        } else {
+                            System.out.println("No Note!");
+                        }
+                    }
                 })
             ),
             autoAimToShootCommand.andThen(swerve.run(() -> swerve.driveChassis(new ChassisSpeeds(0,0,0)))),

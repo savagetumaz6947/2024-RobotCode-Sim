@@ -24,14 +24,13 @@ import com.revrobotics.spark.SparkRelativeEncoder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.util.SimmableDigitalInput;
+import frc.robot.utils.simulation.PerfectAngleSim;
 
 public class AngleSys extends SubsystemBase {
     private TalonFX leftMotor = new TalonFX(41, "canivore");
@@ -44,7 +43,7 @@ public class AngleSys extends SubsystemBase {
     private SparkRelativeEncoder encoder;
     private SparkRelativeEncoderSim encoderSim;
 
-    public static SingleJointedArmSim sim;
+    public static PerfectAngleSim sim;
 
     @AutoLogOutput
     private Pose3d simPose = new Pose3d();
@@ -150,9 +149,7 @@ public class AngleSys extends SubsystemBase {
     }
 
     public void configureSimulation() {
-        sim = new SingleJointedArmSim(
-            DCMotor.getFalcon500(2), 100, 0.05, 2,
-            Units.degreesToRadians(-18), Units.degreesToRadians(107.78), false, Units.degreesToRadians(-18));
+        sim = new PerfectAngleSim(100, Degrees.of(-18), Degrees.of(107.78), Degrees.of(-18));
         
         leftMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
         encoderSim = new SparkRelativeEncoderSim(sparkMaxEncoderOnly);

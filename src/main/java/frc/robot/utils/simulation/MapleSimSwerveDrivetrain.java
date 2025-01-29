@@ -107,6 +107,7 @@ public class MapleSimSwerveDrivetrain {
         SimulatedArena.overrideSimulationTimings(simPeriod, 1);
         SimulatedArena.overrideInstance(new Arena2024Crescendo());
         SimulatedArena.getInstance().addDriveTrainSimulation(mapleSimDrive);
+        SimulatedArena.getInstance().placeGamePiecesOnField();
     }
 
     /**
