@@ -242,7 +242,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             Kilograms.of(55), // robot weight
             Millimeters.of(902.7), // bumper length
             Millimeters.of(902.7), // bumper width
-            DCMotor.getKrakenX60(1),
+            DCMotor.getFalcon500(1),
             DCMotor.getFalcon500(1),
             1.2,
             getModuleLocations(),

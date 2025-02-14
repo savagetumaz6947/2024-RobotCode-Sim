@@ -24,6 +24,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -61,7 +62,7 @@ public class RobotContainer {
     /* Controllers */
     private final DeadzoneJoystick driver = new DeadzoneJoystick(0);
     private final DeadzoneJoystick operator = new DeadzoneJoystick(1);
-
+    
     /* Driver Buttons */
     private final Trigger autoPickupButton = new Trigger(() -> driver.getRawAxis(XboxController.Axis.kRightTrigger.value) > 0.8);
     private final JoystickButton autoShootButton = new JoystickButton(driver, XboxController.Button.kRightBumper.value);
@@ -143,6 +144,8 @@ public class RobotContainer {
     private final AutoAimToShoot autoAimToShootCommand = new AutoAimToShoot(swerve);
     private final AutoRiseToAngle autoRiseToAngleCommand = new AutoRiseToAngle(angleSys, swerve);
 
+    public static double speakerPoints = 0;
+
     private final Command pickUpNoteCommand = new InstantCommand(() -> {
             midIntake.rawMove(-1);
             bottomIntake.rawMove(0.5);
@@ -190,7 +193,7 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     if (Robot.isSimulation()) {
                         double phi = AngleSys.fourBarConversion(Radians.of(AngleSys.sim.getAngleRads())).plus(Degrees.of(10.3)).in(Radians);
-                        if (BottomIntake.intakeSim.obtainGamePieceFromIntake()) {
+                        if (BottomIntake.intakeSim.obtainGamePieceFromIntake() || (RobotState.isAutonomous() && speakerPoints == 0)) {
                             SimulatedArena.getInstance().addGamePieceProjectile(new NoteOnFly(
                                 // Specify the position of the chassis when the note is launched
                                 CommandSwerveDrivetrain.mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose().getTranslation(),
@@ -206,7 +209,13 @@ public class RobotContainer {
                                 -11.49,
                                 // The angle at which the note is launched
                                 -phi
-                            ).asSpeakerShotNote(() -> System.out.println("Scored in Speaker! +2 Points.")).enableBecomesGamePieceOnFieldAfterTouchGround());
+                            ).asSpeakerShotNote(() -> {
+                                if (RobotState.isAutonomous())
+                                    speakerPoints += 5;
+                                else
+                                    speakerPoints += 2;
+                                SmartDashboard.putNumber("Speaker Points", speakerPoints);
+                            }).enableBecomesGamePieceOnFieldAfterTouchGround());
                         } else {
                             System.out.println("No Note!");
                         }

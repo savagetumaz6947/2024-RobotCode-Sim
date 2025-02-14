@@ -22,23 +22,27 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.util.SimmableDigitalInput;
 
 public class IntakeAngle extends SubsystemBase {
     private SparkMax motor = new SparkMax(58, MotorType.kBrushless);
     private SparkMaxConfig config = new SparkMaxConfig();
     private BooleanSupplier intakeBottom;
-    private SimmableDigitalInput upLimit = new SimmableDigitalInput(0, () -> sim.hasHitUpperLimit());
-    private SimmableDigitalInput downLimit = new SimmableDigitalInput(1, () -> sim.hasHitLowerLimit());
+    private DigitalInput upLimit = new DigitalInput(0);
+    private DigitalInput downLimit = new DigitalInput(1);
+
+    private DIOSim upLimitSim;
+    private DIOSim downLimitSim;
 
     private SparkMaxSim motorSim;
 
-    private static SingleJointedArmSim sim;
+    public static SingleJointedArmSim sim;
 
     @AutoLogOutput
     private Pose3d simPose = new Pose3d();
@@ -81,6 +85,9 @@ public class IntakeAngle extends SubsystemBase {
         sim = new SingleJointedArmSim(DCMotor.getNEO(1), 200, 2,
             0.31261, Units.degreesToRadians(11), Units.degreesToRadians(143),
             true, Units.degreesToRadians(143));
+        
+        upLimitSim = new DIOSim(upLimit);
+        downLimitSim = new DIOSim(downLimit);
     }
 
     @Override
@@ -93,6 +100,9 @@ public class IntakeAngle extends SubsystemBase {
         simPose = new Pose3d(
             new Translation3d(Millimeters.of(226.1605), Meters.of(0), Millimeters.of(231.691+50.8)),
             new Rotation3d(Radians.of(0), Radians.of(-sim.getAngleRads()), Radians.of(0)));
+        
+        upLimitSim.setValue(sim.hasHitUpperLimit());
+        downLimitSim.setValue(sim.hasHitLowerLimit());
     }
 
     @Override

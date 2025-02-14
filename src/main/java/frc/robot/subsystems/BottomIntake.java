@@ -47,7 +47,7 @@ public class BottomIntake extends SubsystemBase {
     public void rawMove (double speed) {
         intakeU.set(-speed);
         if (Robot.isSimulation()) {
-            if (speed > 0)
+            if (speed > 0 && IntakeAngle.sim.hasHitLowerLimit())
                 intakeSim.startIntake();
             else
                 intakeSim.stopIntake();

@@ -26,10 +26,11 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.util.SimmableDigitalInput;
 import frc.robot.utils.simulation.PerfectAngleSim;
 
 public class AngleSys extends SubsystemBase {
@@ -37,8 +38,11 @@ public class AngleSys extends SubsystemBase {
     private TalonFX rightMotor = new TalonFX(42, "canivore");
 
     private SparkMax sparkMaxEncoderOnly = new SparkMax(43, MotorType.kBrushed);
-    private SimmableDigitalInput downLimit = new SimmableDigitalInput(9, () -> !sim.hasHitLowerLimit());
-    private SimmableDigitalInput upLimit = new SimmableDigitalInput(8, () -> !sim.hasHitUpperLimit());
+    private DigitalInput downLimit = new DigitalInput(9);
+    private DigitalInput upLimit = new DigitalInput(8);
+
+    private DIOSim downLimitSim;
+    private DIOSim upLimitSim;
 
     private SparkRelativeEncoder encoder;
     private SparkRelativeEncoderSim encoderSim;
@@ -153,6 +157,9 @@ public class AngleSys extends SubsystemBase {
         
         leftMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
         encoderSim = new SparkRelativeEncoderSim(sparkMaxEncoderOnly);
+
+        upLimitSim = new DIOSim(upLimit);
+        downLimitSim = new DIOSim(downLimit);
     }
 
     @Override
@@ -191,5 +198,8 @@ public class AngleSys extends SubsystemBase {
             new Rotation3d(0,phi-Math.PI,0)
         );
         Logger.recordOutput("Debug/ExitPose", exitPose);
+
+        upLimitSim.setValue(!sim.hasHitUpperLimit());
+        downLimitSim.setValue(!sim.hasHitLowerLimit());
     }
 }
